@@ -1,0 +1,127 @@
+Python Code for PS2- Kevlishvili
+
+Q1:
+
+import numpy as np
+import scipy . stats as stats
+import matplotlib . pyplot as plt
+# Generate random numbers
+u = np. random . rand (1000000) # uniform
+a = 10
+x = a * u **(1/2) # probability integral transform
+# Plot
+plt.hist (x, bins =50 , density =True , color ="red",
+alpha =0.5)
+plt.xlabel ("x")
+plt.ylabel (" Probability Density ")
+plt.title (" Histogram ")
+plt.show ()
+
+-------
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters
+a = 10
+x = np.linspace(0, a, 1000)  # Generate points between 0 and a
+pdf = (2 / a**2) * x         # Calculate PDF values
+
+# Plotting
+plt.figure(figsize=(8, 5))
+plt.plot(x, pdf, label=f"PDF: $f(x) = \\frac{{2}}{{{a}^2}}x$", color='blue')
+plt.fill_between(x, pdf, alpha=0.3, color='blue')  # Shade under the curve
+plt.title("True Distribution of $f(x)$")
+plt.xlabel("$x$")
+plt.ylabel("$f(x)$")
+plt.legend()
+plt.grid()
+
+----------
+
+Q2: 
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters
+n_samples = 10000  # Number of samples
+weights = [1/3, 2/3]  # Mixture weights for components (λ=2 and λ=3)
+lambdas = [2, 3]  # Rate parameters for the exponential components
+
+# Step 1: Choose components based on weights
+u1 = np.random.rand(n_samples)
+component_choice = np.where(u1 < weights[0], 0, 1)  # 0 for λ=2, 1 for λ=3
+
+# Step 2: Sample from the selected exponential components
+x = np.zeros(n_samples)
+for i in range(len(lambdas)):
+    mask = (component_choice == i)
+    n_selected = np.sum(mask)
+    # Inverse transform method: X = -ln(U)/λ
+    x[mask] = -np.log(np.random.rand(n_selected)) / lambdas[i]
+
+# Plot histogram vs theoretical PDF
+plt.hist(x, bins=50, density=True, alpha=0.6, color="red", label="Samples")
+
+# Overlay theoretical PDF
+x_grid = np.linspace(0, 5, 500)
+theoretical_pdf = (weights[0] * 2 * np.exp(-2 * x_grid)) + (weights[1] * 3 * np.exp(-3 * x_grid))
+plt.plot(x_grid, theoretical_pdf, "k-", linewidth=2, label="Theoretical PDF")
+
+plt.xlabel("x")
+plt.ylabel("Probability Density")
+plt.title("Finite Mixture Sampling: $f(x) = \\frac{1}{3} \cdot 2e^{-2x} + \\frac{2}{3} \cdot 3e^{-3x}$")
+plt.legend()
+plt.show()
+
+-------
+
+Q3:
+
+import numpy as np
+import scipy.stats as stats
+
+# True Beta(3, 3) parameters
+a, b = 3, 3
+true_mean = a / (a + b)  # = 0.5
+true_var = (a * b) / ((a + b)**2 * (a + b + 1))  # ≈ 0.0357
+
+# Acceptance-rejection parameters
+M = 1.875  # Maximum of Beta(3,3) PDF divided by uniform PDF
+n_samples = 500
+samples = []
+
+# Accept-reject sampling
+while len(samples) < n_samples:
+    # Generate proposals in batches
+    x = np.random.uniform(0, 1, size=1000)
+    u = np.random.uniform(0, 1, size=1000)
+    
+    # Acceptance condition: u <= Beta(3,3)_PDF/(M*Uniform_PDF)
+    accept_mask = u <= 16 * (x**2) * (1 - x)**2  # 16 = 30/1.875
+    accepted = x[accept_mask]
+    
+    samples.extend(accepted.tolist())
+    if len(samples) >= n_samples:
+        samples = samples[:n_samples]
+        break
+
+# Calculate statistics
+sample_mean = np.mean(samples)
+sample_var = np.var(samples, ddof=1)  # Unbiased estimator
+
+print(f"Sample Mean: {sample_mean:.4f} | True Mean: {true_mean:.4f}")
+print(f"Sample Variance: {sample_var:.4f} | True Variance: {true_var:.4f}")
+
+# Optional: Visualization
+import matplotlib.pyplot as plt
+x_grid = np.linspace(0, 1, 100)
+plt.hist(samples, bins=30, density=True, alpha=0.7, label='Samples')
+plt.plot(x_grid, stats.beta.pdf(x_grid, a, b), 'r-', lw=2, label='Beta(3,3) PDF')
+plt.title('Accept-Reject Sampling Results')
+plt.xlabel('x')
+plt.ylabel('Density')
+plt.legend()
+plt.show()
+
+
